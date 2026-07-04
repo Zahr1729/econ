@@ -39,13 +39,14 @@ impl Widget for FancySlider<'_> {
     fn ui(self, ui: &mut egui::Ui) -> egui::Response {
         ui.vertical(|ui| {
             ui.label(self.label);
-
             let text = self.text();
             ui.add(
                 egui::Slider::new(self.value, 0..=120)
                     .text(format!("{}", text))
                     .show_value(false),
             );
+
+            ui.separator();
         })
         .response
     }
