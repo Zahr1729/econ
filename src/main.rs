@@ -2,16 +2,22 @@ use egui;
 use egui::vec2;
 use humanly::HumanNumber;
 
-use crate::{model::Economy, ui::widgets::bar_chart::BarChart};
+use crate::{
+    model::Economy,
+    ui::{
+        value_bar_converter::ValueBarConverter,
+        widgets::{bar_chart::BarChart, fancy_slider::FancySlider},
+    },
+};
 
 pub mod model;
 pub mod ui;
 
 struct MyApp {
     economy: Economy,
-    borrowing_bar: u32,
     spending_bar: u32,
     taxes_bar: u32,
+    printing_bar: u32,
     points: Vec<u64>,
 }
 
@@ -28,9 +34,9 @@ impl Default for MyApp {
                 printing: 17_000_000_000,
                 money_supply: 40_000_000_000_000,
             },
-            borrowing_bar: 30,
             spending_bar: 100,
             taxes_bar: 100,
+            printing_bar: 100,
             points: (0..100).map(|i| (i + 30) * (i + 10)).collect(),
         }
     }
@@ -41,35 +47,52 @@ impl eframe::App for MyApp {
         egui::SidePanel::right("Right Panel").show(ctx, |ui| {
             let economy = &mut self.economy;
             ui.heading("Economy");
-            ui.vertical(|ui| {
-                ui.label("Taxes");
-                let text =
-                    HumanNumber::from(self.taxes_bar as f64 * 212_030_100_000.0 / 100.0).concise();
-                ui.add(egui::Slider::new(&mut self.taxes_bar, 0..=120).text(format!("{}", text)))
-            });
-            ui.vertical(|ui| {
-                ui.label("Borrowing");
-                let text =
-                    HumanNumber::from(self.taxes_bar as f64 * 82_71_210_000.0 / 100.0).concise();
-                ui.add(
-                    egui::Slider::new(&mut self.borrowing_bar, 0..=120).text(format!("{}", text)),
-                )
-            });
 
-            ui.vertical(|ui| {
-                ui.label("Spending");
-                let text =
-                    HumanNumber::from(self.taxes_bar as f64 * 172_135_100_000.0 / 100.0).concise();
-                ui.add(egui::Slider::new(&mut self.spending_bar, 0..=120).text(format!("{}", text)))
-            });
+            ui.add(FancySlider::new(
+                &mut self.taxes_bar,
+                "Taxes",
+                &ValueBarConverter::new(0, 132_040_560_000, 0, 120),
+            ));
+            ui.add(FancySlider::new(
+                &mut self.spending_bar,
+                "Spending",
+                &ValueBarConverter::new(0, 181_216_060_000, 0, 120),
+            ));
+            ui.add(FancySlider::new(
+                &mut self.printing_bar,
+                "Printing",
+                &ValueBarConverter::new(0, 51_024_030_000, 0, 120),
+            ));
+
             let button = ui.button("Progress Year");
             economy.taxes = self.taxes_bar as u64 * 200_000_000_000 / 100;
-            economy.borrowing = self.borrowing_bar as u64 * 80_000_000_000 / 100;
             economy.spending = self.spending_bar as u64 * 200_000_000_000 / 100;
+            economy.printing = self.printing_bar as u64 * 200_000_000_000 / 100;
+
             if button.clicked() {
                 economy.progress_year();
             }
-            ui.label(format!("Economy: {:?}", economy));
+            economy.adjust_borrowing();
+            ui.label(format!(
+                "Inflation: {}",
+                HumanNumber::from(economy.inflation)
+            ));
+            ui.label(format!(
+                "Interest: {}",
+                HumanNumber::from(economy.interest).concise()
+            ));
+            ui.label(format!(
+                "Surplus: {}",
+                HumanNumber::from(economy.surplus() as f64).concise()
+            ));
+            ui.label(format!(
+                "Debt: {}",
+                HumanNumber::from(economy.debt as f64).concise()
+            ));
+            ui.label(format!(
+                "Money Supply: {}",
+                HumanNumber::from(economy.money_supply as f64).concise()
+            ));
         });
 
         egui::CentralPanel::default().show(ctx, |ui| {
