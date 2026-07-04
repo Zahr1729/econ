@@ -1,5 +1,4 @@
 use egui::{self, Widget};
-use humanly::HumanNumber;
 
 use crate::ui::value_bar_converter::ValueBarConverter;
 

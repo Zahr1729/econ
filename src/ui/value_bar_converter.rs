@@ -1,5 +1,3 @@
-use core::range::RangeInclusive;
-
 pub struct ValueBarConverter {
     min_value: u64,
     max_value: u64,
