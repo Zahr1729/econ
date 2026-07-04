@@ -1,13 +1,38 @@
-use crate::ui::UiHandler;
+use std::sync::{Arc, Mutex};
 
+use crate::{
+    model::Economy,
+    ui::{tabs::Tab, widgets::pie_chart::PieChart},
+};
+
+use egui::vec2;
 use humanly::HumanNumber;
 
 use crate::ui::{value_bar_converter::ValueBarConverter, widgets::fancy_slider::FancySlider};
 
-impl UiHandler {
-    pub fn budget_ui(&mut self, ui: &mut egui::Ui) {
-        let state = &mut self.economy.lock().unwrap().state;
+pub struct BudgetUiHandler {
+    spending_bar: u32,
+    taxes_bar: u32,
+    printing_bar: u32,
+    radius: f32,
+}
+
+impl Default for BudgetUiHandler {
+    fn default() -> Self {
+        Self {
+            spending_bar: 100,
+            taxes_bar: 100,
+            printing_bar: 100,
+            radius: 150.0,
+        }
+    }
+}
+
+impl Tab for BudgetUiHandler {
+    fn ui_left(&mut self, ui: &mut egui::Ui, economy: Arc<Mutex<Economy>>) {
+        let state = &mut economy.lock().unwrap().state;
         ui.heading("Budget");
+        ui.separator();
 
         ui.add(FancySlider::new(
             &mut self.taxes_bar,
@@ -50,6 +75,16 @@ impl UiHandler {
         ui.label(format!(
             "Money Supply: {}",
             HumanNumber::from(state.money_supply as f64).concise()
+        ));
+    }
+
+    fn ui_centre(&mut self, ui: &mut egui::Ui, economy: Arc<Mutex<Economy>>) {
+        let state = &mut economy.lock().unwrap().state;
+        let mut v = vec![state.taxes, state.printing, state.borrowing];
+        ui.add(PieChart::new(
+            &mut v,
+            &mut self.radius,
+            1000.0 * vec2(1.0, 0.35),
         ));
     }
 }

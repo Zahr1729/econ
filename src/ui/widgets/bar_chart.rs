@@ -2,28 +2,22 @@ use egui::{Color32, Pos2, Rect, Response, Ui, Vec2, Widget, emath, epaint};
 
 pub struct BarChart<'a> {
     points: &'a mut Vec<u64>,
+    thickness: &'a mut f32,
     size: Vec2,
-    thickness: f32,
 }
 
 impl<'a> BarChart<'a> {
-    pub fn new(points: &'a mut Vec<u64>, size: Vec2, thickness: f32) -> Self {
+    pub fn new(points: &'a mut Vec<u64>, thickness: &'a mut f32, size: Vec2) -> Self {
         BarChart {
             points,
-            size,
             thickness,
+            size,
         }
     }
 }
 
-impl BarChart<'_> {
-    pub fn thickness(&mut self, thickness: f32) {
-        self.thickness = thickness;
-    }
-}
-
 impl Widget for BarChart<'_> {
-    fn ui(mut self, ui: &mut Ui) -> Response {
+    fn ui(self, ui: &mut Ui) -> Response {
         egui::Frame::canvas(ui.style())
             .show(ui, |ui| {
                 let mut shapes = vec![];
@@ -50,7 +44,7 @@ impl Widget for BarChart<'_> {
                         }
                         + to_screen.scale()
                             * Vec2 {
-                                x: -self.thickness / 2.0,
+                                x: -self.thickness.clone() / 2.0,
                                 y: 0.0,
                             };
                     let max = to_screen
@@ -60,7 +54,7 @@ impl Widget for BarChart<'_> {
                         }
                         + to_screen.scale()
                             * Vec2 {
-                                x: self.thickness / 2.0,
+                                x: self.thickness.clone() / 2.0,
                                 y: 0.0,
                             };
                     let rect = Rect { min, max };
@@ -68,7 +62,7 @@ impl Widget for BarChart<'_> {
                 }
                 ui.painter().extend(shapes);
 
-                ui.add(egui::Slider::new(&mut self.thickness, 0.0..=1.0).text("Thickness"))
+                ui.add(egui::Slider::new(self.thickness, 0.0..=1.0).text("Thickness"))
             })
             .response
     }

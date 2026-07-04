@@ -1,6 +1,6 @@
 use egui::{self, Widget};
 
-use crate::ui::value_bar_converter::ValueBarConverter;
+use crate::ui::{value_bar_converter::ValueBarConverter, widgets::reduced_text::reduce_text};
 
 pub struct FancySlider<'a> {
     value: &'a mut u32,
@@ -19,19 +19,7 @@ impl<'a> FancySlider<'a> {
 
     fn text(&self) -> String {
         let actual_value = self.converter.to_value(self.value.clone());
-        let text = if actual_value > 1_000_000_000_000 {
-            let adjusted_value = (actual_value / 10_000_000_000) as f64 / 100.0;
-            format!("{:.6} T", adjusted_value.to_string())
-        } else if actual_value > 1_000_000_000 {
-            let adjusted_value = (actual_value / 10_000_000) as f64 / 100.0;
-            format!("{:.6} B", adjusted_value.to_string())
-        } else if actual_value > 1_000_000 {
-            let adjusted_value = (actual_value / 10_000) as f64 / 100.0;
-            format!("{:.6} M", adjusted_value.to_string())
-        } else {
-            format!("{}", actual_value)
-        };
-        text
+        reduce_text(actual_value)
     }
 }
 

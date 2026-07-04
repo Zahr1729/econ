@@ -1,13 +1,18 @@
-pub mod left_bars;
+pub mod tabs;
 pub mod value_bar_converter;
 pub mod widgets;
 
 use std::sync::{Arc, Mutex};
 
-use egui;
-use egui::vec2;
+use egui::{self, Color32};
 
-use crate::{model::Economy, ui::widgets::bar_chart::BarChart};
+use crate::{
+    model::Economy,
+    ui::{
+        tabs::{Tab, budget_ui::BudgetUiHandler, demographics_ui::DemographicsUiHandler},
+        widgets::reduced_text::reduce_text,
+    },
+};
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum TabEnum {
@@ -19,10 +24,8 @@ pub enum TabEnum {
 pub struct UiHandler {
     economy: Arc<Mutex<Economy>>,
     tab: TabEnum,
-    spending_bar: u32,
-    taxes_bar: u32,
-    printing_bar: u32,
-    points: Vec<u64>,
+    budget_ui_handler: BudgetUiHandler,
+    demographics_ui_handler: DemographicsUiHandler,
 }
 
 impl UiHandler {
@@ -30,12 +33,8 @@ impl UiHandler {
         Self {
             economy,
             tab: TabEnum::Budget,
-            spending_bar: 100,
-            taxes_bar: 100,
-            printing_bar: 100,
-            points: (0..100)
-                .map(|i| (i + 100) * (i + 100) * (i + 100) / ((101 - i) * (101 - i) * (101 - i)))
-                .collect(),
+            budget_ui_handler: BudgetUiHandler::default(),
+            demographics_ui_handler: DemographicsUiHandler::default(),
         }
     }
 }
@@ -45,24 +44,47 @@ impl UiHandler {
         egui::TopBottomPanel::top("Top Panel").show(ctx, |ui| {
             let tab = &mut self.tab;
             ui.horizontal(|ui| {
-                ui.selectable_value(tab, TabEnum::Political, "Politics");
-                ui.selectable_value(tab, TabEnum::Budget, "Budget");
-                ui.selectable_value(tab, TabEnum::Demographic, "Demography");
-            });
+                // Tab choices
+                ui.horizontal(|ui| {
+                    ui.selectable_value(tab, TabEnum::Political, "Politics");
+                    ui.selectable_value(tab, TabEnum::Budget, "Budget");
+                    ui.selectable_value(tab, TabEnum::Demographic, "Demography");
+                });
+                ui.separator();
+                // Critical data.
+                ui.horizontal(|ui| {
+                    let state = &self.economy.lock().unwrap().state;
+                    ui.add(if state.deficit() != 0 {
+                        egui::Label::new(
+                            egui::RichText::new(reduce_text(state.deficit())).color(Color32::RED),
+                        )
+                    } else {
+                        egui::Label::new(
+                            egui::RichText::new(reduce_text(state.surplus())).color(Color32::GREEN),
+                        )
+                    })
+                });
+            })
         });
         egui::SidePanel::left("Left Panel").show(ctx, |ui| match self.tab {
             TabEnum::Budget => {
-                self.budget_ui(ui);
+                self.budget_ui_handler.ui_left(ui, self.economy.clone());
+            }
+            TabEnum::Demographic => {
+                ();
             }
             _ => (),
         });
 
-        egui::CentralPanel::default().show(ctx, |ui| {
-            ui.add(BarChart::new(
-                &mut self.points,
-                1000.0 * vec2(1.0, 0.35),
-                0.5,
-            ));
+        egui::CentralPanel::default().show(ctx, |ui| match self.tab {
+            TabEnum::Budget => {
+                self.budget_ui_handler.ui_centre(ui, self.economy.clone());
+            }
+            TabEnum::Demographic => {
+                self.demographics_ui_handler
+                    .ui_centre(ui, self.economy.clone());
+            }
+            _ => (),
         });
     }
 }
