@@ -34,26 +34,33 @@ impl Tab for BudgetUiHandler {
         ui.heading("Budget");
         ui.separator();
 
+        let converter_taxes = ValueBarConverter::new(0, 132_040_560_000, 0, 120);
+        let converter_spending = ValueBarConverter::new(0, 181_216_060_000, 0, 120);
+        let converter_printing = ValueBarConverter::new(0, 51_024_030_000, 0, 120);
+
         ui.add(FancySlider::new(
             &mut self.taxes_bar,
+            true,
             "Taxes",
-            &ValueBarConverter::new(0, 132_040_560_000, 0, 120),
+            &converter_taxes,
         ));
         ui.add(FancySlider::new(
             &mut self.spending_bar,
+            false,
             "Spending",
-            &ValueBarConverter::new(0, 181_216_060_000, 0, 120),
+            &converter_spending,
         ));
         ui.add(FancySlider::new(
             &mut self.printing_bar,
+            true,
             "Printing",
-            &ValueBarConverter::new(0, 51_024_030_000, 0, 120),
+            &converter_printing,
         ));
 
         let button = ui.button("Progress Year");
-        state.taxes = self.taxes_bar as u64 * 200_000_000_000 / 100;
-        state.spending = self.spending_bar as u64 * 200_000_000_000 / 100;
-        state.printing = self.printing_bar as u64 * 200_000_000_000 / 100;
+        state.taxes = converter_taxes.to_value(self.taxes_bar);
+        state.spending = converter_spending.to_value(self.spending_bar);
+        state.printing = converter_printing.to_value(self.printing_bar);
 
         if button.clicked() {
             state.progress_year();

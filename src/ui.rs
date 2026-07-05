@@ -4,7 +4,7 @@ pub mod widgets;
 
 use std::sync::{Arc, Mutex};
 
-use egui::{self, Color32};
+use egui::{self, Widget};
 
 use crate::{
     model::Economy,
@@ -42,8 +42,8 @@ impl UiHandler {
 impl UiHandler {
     pub fn update(&mut self, ctx: &egui::Context) {
         egui::TopBottomPanel::top("Top Panel").show(ctx, |ui| {
-            let tab = &mut self.tab;
             ui.horizontal(|ui| {
+                let tab = &mut self.tab;
                 // Tab choices
                 ui.horizontal(|ui| {
                     ui.selectable_value(tab, TabEnum::Political, "Politics");
@@ -51,18 +51,41 @@ impl UiHandler {
                     ui.selectable_value(tab, TabEnum::Demographic, "Demography");
                 });
                 ui.separator();
+
+                let state = &self.economy.lock().unwrap().state;
+                let response = if state.deficit() != 0 {
+                    egui::Label::new(reduce_text(state.deficit(), false))
+                        .selectable(false)
+                        .ui(ui)
+                } else {
+                    egui::Label::new(reduce_text(state.surplus(), true))
+                        .selectable(false)
+                        .ui(ui)
+                };
+
                 // Critical data.
-                ui.horizontal(|ui| {
-                    let state = &self.economy.lock().unwrap().state;
-                    ui.add(if state.deficit() != 0 {
-                        egui::Label::new(
-                            egui::RichText::new(reduce_text(state.deficit())).color(Color32::RED),
-                        )
-                    } else {
-                        egui::Label::new(
-                            egui::RichText::new(reduce_text(state.surplus())).color(Color32::GREEN),
-                        )
-                    })
+                let tooltip = egui::Tooltip::for_enabled(&response);
+                tooltip.show(|ui| {
+                    ui.horizontal(|ui| {
+                        ui.add(egui::Label::new(egui::RichText::new("Revenue: ")));
+                        ui.add(egui::Label::new(reduce_text(state.revenue(), true)));
+                    });
+                    ui.horizontal(|ui| {
+                        ui.add(egui::Label::new(egui::RichText::new("\tTaxes: ")));
+                        ui.add(egui::Label::new(reduce_text(state.taxes, true)));
+                    });
+                    ui.horizontal(|ui| {
+                        ui.add(egui::Label::new(egui::RichText::new("\tPrinting: ")));
+                        ui.add(egui::Label::new(reduce_text(state.printing, true)));
+                    });
+                    ui.horizontal(|ui| {
+                        ui.add(egui::Label::new(egui::RichText::new("Expenditure: ")));
+                        ui.add(egui::Label::new(reduce_text(state.expenses(), false)));
+                    });
+                    ui.horizontal(|ui| {
+                        ui.add(egui::Label::new(egui::RichText::new("\tSpending: ")));
+                        ui.add(egui::Label::new(reduce_text(state.spending, false)));
+                    });
                 });
             })
         });
