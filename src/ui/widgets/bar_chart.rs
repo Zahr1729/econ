@@ -1,3 +1,4 @@
+use eframe::egui;
 use egui::{Color32, Pos2, Rect, Response, Ui, Vec2, Widget, emath, epaint};
 
 pub struct BarChart<'a> {

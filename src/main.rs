@@ -1,6 +1,5 @@
+use eframe::egui::{self, Ui};
 use std::sync::{Arc, Mutex};
-
-use egui::{self};
 
 use crate::{
     model::{Economy, demographics::Demographics, state::State},
@@ -17,7 +16,7 @@ struct MyApp {
 
 impl Default for MyApp {
     fn default() -> Self {
-        let economy = Economy {
+        let mut economy = Economy {
             state: State {
                 inflation: 0.01,
                 interest: 0.02,
@@ -27,9 +26,11 @@ impl Default for MyApp {
                 spending: 117_000_000_000,
                 printing: 17_000_000_000,
                 money_supply: 40_000_000_000_000,
+                interest_payments: 0,
             },
             demographics: Demographics {},
         };
+        economy.state.adjust_interest_payments();
         let econ_wrapper = Arc::new(Mutex::new(economy));
         Self {
             economy: econ_wrapper.clone(),
@@ -39,8 +40,8 @@ impl Default for MyApp {
 }
 
 impl eframe::App for MyApp {
-    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        self.ui_handler.update(ctx);
+    fn ui(&mut self, ui: &mut Ui, _frame: &mut eframe::Frame) {
+        self.ui_handler.update(ui);
     }
 }
 
@@ -50,14 +51,5 @@ fn main() {
         viewport: egui::ViewportBuilder::default(),
         ..Default::default()
     };
-    let _ = eframe::run_native(
-        "Econ",
-        options,
-        Box::new(|cc| {
-            // This gives us image support:
-            egui_extras::install_image_loaders(&cc.egui_ctx);
-
-            Ok(Box::<MyApp>::default())
-        }),
-    );
+    let _ = eframe::run_native("Econ", options, Box::new(|_cc| Ok(Box::<MyApp>::default())));
 }

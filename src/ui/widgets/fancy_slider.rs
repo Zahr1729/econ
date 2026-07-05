@@ -1,10 +1,13 @@
-use egui;
+use eframe::egui;
 
-use crate::ui::{value_bar_converter::ValueBarConverter, widgets::reduced_text::FancyNumber};
+use crate::ui::{
+    value_bar_converter::ValueBarConverter,
+    widgets::reduced_text::{FancyNumber, Number, SignEnum},
+};
 
 pub struct FancySlider<'a> {
     value: &'a mut u32,
-    sign: bool,
+    sign: SignEnum,
     label: &'a str,
     converter: &'a ValueBarConverter,
 }
@@ -12,7 +15,7 @@ pub struct FancySlider<'a> {
 impl<'a> FancySlider<'a> {
     pub fn new(
         value: &'a mut u32,
-        sign: bool,
+        sign: SignEnum,
         label: &'a str,
         converter: &'a ValueBarConverter,
     ) -> Self {
@@ -26,7 +29,7 @@ impl<'a> FancySlider<'a> {
 
     fn text(&self) -> FancyNumber {
         let actual_value = self.converter.to_value(self.value.clone());
-        FancyNumber::new(actual_value, self.sign)
+        FancyNumber::new(Number::U(actual_value), self.sign)
     }
 }
 

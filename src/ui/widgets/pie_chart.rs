@@ -1,9 +1,9 @@
+use eframe::egui;
+use egui::{Color32, Pos2, Rect, Response, Stroke, Ui, Vec2, Widget, emath, vec2};
 use std::{
     f32::consts::PI,
     hash::{DefaultHasher, Hash, Hasher},
 };
-
-use egui::{Color32, Pos2, Rect, Response, Stroke, Ui, Vec2, Widget, emath, vec2};
 
 pub struct PieChart<'a> {
     data: &'a mut Vec<u64>,

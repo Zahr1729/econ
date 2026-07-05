@@ -7,6 +7,7 @@ pub struct State {
     pub taxes: u64,
     pub borrowing: u64,
     pub spending: u64,
+    pub interest_payments: u64,
     pub printing: u64,
 }
 
@@ -16,7 +17,7 @@ impl State {
     }
 
     pub fn expenses(&self) -> u64 {
-        self.spending
+        self.spending + self.interest_payments
     }
 
     pub fn profit(&self) -> i64 {
@@ -36,8 +37,13 @@ impl State {
         self.borrowing = self.deficit();
     }
 
+    pub fn adjust_interest_payments(&mut self) {
+        self.interest_payments = (self.debt as f64 * self.inflation) as u64;
+    }
+
     pub fn progress_year(&mut self) {
         self.money_supply += self.printing;
+        self.debt -= self.surplus().min(self.debt);
         self.debt = ((1.0 + self.interest) * self.debt as f64) as u64;
         self.debt += self.borrowing;
     }

@@ -2,15 +2,15 @@ pub mod tabs;
 pub mod value_bar_converter;
 pub mod widgets;
 
+use eframe::egui::{self, Ui};
+use egui::Widget;
 use std::sync::{Arc, Mutex};
-
-use egui::{self, Widget};
 
 use crate::{
     model::Economy,
     ui::{
         tabs::{Tab, budget_ui::BudgetUiHandler, demographics_ui::DemographicsUiHandler},
-        widgets::reduced_text::reduce_text,
+        widgets::reduced_text::{SignEnum, reduce_text_u64},
     },
 };
 
@@ -40,8 +40,8 @@ impl UiHandler {
 }
 
 impl UiHandler {
-    pub fn update(&mut self, ctx: &egui::Context) {
-        egui::TopBottomPanel::top("Top Panel").show(ctx, |ui| {
+    pub fn update(&mut self, ui: &mut Ui) {
+        egui::Panel::top("Top Panel").show(ui, |ui| {
             ui.horizontal(|ui| {
                 let tab = &mut self.tab;
                 // Tab choices
@@ -54,11 +54,11 @@ impl UiHandler {
 
                 let state = &self.economy.lock().unwrap().state;
                 let response = if state.deficit() != 0 {
-                    egui::Label::new(reduce_text(state.deficit(), false))
+                    egui::Label::new(reduce_text_u64(state.deficit(), SignEnum::Negative))
                         .selectable(false)
                         .ui(ui)
                 } else {
-                    egui::Label::new(reduce_text(state.surplus(), true))
+                    egui::Label::new(reduce_text_u64(state.surplus(), SignEnum::Positive))
                         .selectable(false)
                         .ui(ui)
                 };
@@ -68,28 +68,50 @@ impl UiHandler {
                 tooltip.show(|ui| {
                     ui.horizontal(|ui| {
                         ui.add(egui::Label::new(egui::RichText::new("Revenue: ")));
-                        ui.add(egui::Label::new(reduce_text(state.revenue(), true)));
+                        ui.add(egui::Label::new(reduce_text_u64(
+                            state.revenue(),
+                            SignEnum::Positive,
+                        )));
                     });
                     ui.horizontal(|ui| {
                         ui.add(egui::Label::new(egui::RichText::new("\tTaxes: ")));
-                        ui.add(egui::Label::new(reduce_text(state.taxes, true)));
+                        ui.add(egui::Label::new(reduce_text_u64(
+                            state.taxes,
+                            SignEnum::Positive,
+                        )));
                     });
                     ui.horizontal(|ui| {
                         ui.add(egui::Label::new(egui::RichText::new("\tPrinting: ")));
-                        ui.add(egui::Label::new(reduce_text(state.printing, true)));
+                        ui.add(egui::Label::new(reduce_text_u64(
+                            state.printing,
+                            SignEnum::Positive,
+                        )));
                     });
                     ui.horizontal(|ui| {
                         ui.add(egui::Label::new(egui::RichText::new("Expenditure: ")));
-                        ui.add(egui::Label::new(reduce_text(state.expenses(), false)));
+                        ui.add(egui::Label::new(reduce_text_u64(
+                            state.expenses(),
+                            SignEnum::Negative,
+                        )));
                     });
                     ui.horizontal(|ui| {
                         ui.add(egui::Label::new(egui::RichText::new("\tSpending: ")));
-                        ui.add(egui::Label::new(reduce_text(state.spending, false)));
+                        ui.add(egui::Label::new(reduce_text_u64(
+                            state.spending,
+                            SignEnum::Negative,
+                        )));
+                    });
+                    ui.horizontal(|ui| {
+                        ui.add(egui::Label::new(egui::RichText::new("\tInterest: ")));
+                        ui.add(egui::Label::new(reduce_text_u64(
+                            state.interest_payments,
+                            SignEnum::Negative,
+                        )));
                     });
                 });
             })
         });
-        egui::SidePanel::left("Left Panel").show(ctx, |ui| match self.tab {
+        egui::Panel::left("Left Panel").show(ui, |ui| match self.tab {
             TabEnum::Budget => {
                 self.budget_ui_handler.ui_left(ui, self.economy.clone());
             }
@@ -99,7 +121,7 @@ impl UiHandler {
             _ => (),
         });
 
-        egui::CentralPanel::default().show(ctx, |ui| match self.tab {
+        egui::CentralPanel::default().show(ui, |ui| match self.tab {
             TabEnum::Budget => {
                 self.budget_ui_handler.ui_centre(ui, self.economy.clone());
             }

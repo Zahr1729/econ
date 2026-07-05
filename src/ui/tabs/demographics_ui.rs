@@ -1,9 +1,9 @@
-use std::sync::{Arc, Mutex};
-
 use crate::{
     model::Economy,
     ui::{tabs::Tab, widgets::bar_chart::BarChart},
 };
+use eframe::egui;
+use std::sync::{Arc, Mutex};
 
 use egui::vec2;
 

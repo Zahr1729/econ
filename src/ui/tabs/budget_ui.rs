@@ -1,12 +1,18 @@
-use std::sync::{Arc, Mutex};
-
 use crate::{
     model::Economy,
-    ui::{tabs::Tab, widgets::pie_chart::PieChart},
+    ui::{
+        tabs::Tab,
+        widgets::{
+            pie_chart::PieChart,
+            reduced_text::{FancyNumber, Number, SignEnum},
+            stacked_bar_chart::StackedBarChart,
+        },
+    },
 };
+use eframe::egui;
+use std::sync::{Arc, Mutex};
 
-use egui::vec2;
-use humanly::HumanNumber;
+use egui::{Widget, vec2};
 
 use crate::ui::{value_bar_converter::ValueBarConverter, widgets::fancy_slider::FancySlider};
 
@@ -15,6 +21,7 @@ pub struct BudgetUiHandler {
     taxes_bar: u32,
     printing_bar: u32,
     radius: f32,
+    vertical: bool,
 }
 
 impl Default for BudgetUiHandler {
@@ -24,6 +31,7 @@ impl Default for BudgetUiHandler {
             taxes_bar: 100,
             printing_bar: 100,
             radius: 150.0,
+            vertical: true,
         }
     }
 }
@@ -40,19 +48,19 @@ impl Tab for BudgetUiHandler {
 
         ui.add(FancySlider::new(
             &mut self.taxes_bar,
-            true,
+            SignEnum::Positive,
             "Taxes",
             &converter_taxes,
         ));
         ui.add(FancySlider::new(
             &mut self.spending_bar,
-            false,
+            SignEnum::Negative,
             "Spending",
             &converter_spending,
         ));
         ui.add(FancySlider::new(
             &mut self.printing_bar,
-            true,
+            SignEnum::Positive,
             "Printing",
             &converter_printing,
         ));
@@ -66,23 +74,32 @@ impl Tab for BudgetUiHandler {
             state.progress_year();
         }
         state.adjust_borrowing();
-        ui.label(format!("Inflation: {}", HumanNumber::from(state.inflation)));
-        ui.label(format!(
-            "Interest: {}",
-            HumanNumber::from(state.interest).concise()
-        ));
-        ui.label(format!(
-            "Surplus: {}",
-            HumanNumber::from(state.surplus() as f64).concise()
-        ));
-        ui.label(format!(
-            "Debt: {}",
-            HumanNumber::from(state.debt as f64).concise()
-        ));
-        ui.label(format!(
-            "Money Supply: {}",
-            HumanNumber::from(state.money_supply as f64).concise()
-        ));
+        ui.horizontal(|ui| {
+            ui.label("Inflation: ");
+            FancyNumber::new(Number::F(state.inflation), SignEnum::Neutral).ui(ui)
+        });
+        ui.horizontal(|ui| {
+            ui.label("Interest: ");
+            FancyNumber::new(Number::F(state.interest), SignEnum::Neutral).ui(ui)
+        });
+        ui.horizontal(|ui| {
+            ui.label("Money Supply: ");
+            FancyNumber::new(Number::U(state.money_supply), SignEnum::Neutral).ui(ui)
+        });
+        ui.separator();
+        ui.horizontal(|ui| {
+            ui.label("Surplus: ");
+            FancyNumber::new(Number::U(state.surplus()), SignEnum::Positive).ui(ui)
+        });
+        ui.separator();
+        ui.horizontal(|ui| {
+            ui.label("Interest: ");
+            FancyNumber::new(Number::U(state.deficit()), SignEnum::Negative).ui(ui)
+        });
+        ui.horizontal(|ui| {
+            ui.label("Debt: ");
+            FancyNumber::new(Number::U(state.debt), SignEnum::Negative).ui(ui)
+        });
     }
 
     fn ui_centre(&mut self, ui: &mut egui::Ui, economy: Arc<Mutex<Economy>>) {
@@ -93,5 +110,7 @@ impl Tab for BudgetUiHandler {
             &mut self.radius,
             1000.0 * vec2(1.0, 0.35),
         ));
+
+        ui.add(StackedBarChart::new(state, &mut self.vertical));
     }
 }

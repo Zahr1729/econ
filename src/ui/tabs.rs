@@ -1,3 +1,4 @@
+use eframe::egui;
 use std::sync::{Arc, Mutex};
 
 use crate::model::Economy;
