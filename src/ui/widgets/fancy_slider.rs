@@ -2,7 +2,7 @@ use eframe::egui;
 
 use crate::ui::{
     value_bar_converter::ValueBarConverter,
-    widgets::reduced_text::{FancyNumber, Number, SignEnum},
+    widgets::fancy_text::{FancyNumber, Number, SignEnum},
 };
 
 pub struct SliderHandler {
@@ -37,7 +37,9 @@ impl<'a> FancySlider<'a> {
 
     fn text(&self) -> FancyNumber {
         let actual_value = self.handler.converter.to_value(self.handler.value.clone());
-        FancyNumber::new(Number::U(actual_value), self.sign)
+        let mut fancy_number = FancyNumber::new("".to_string(), Number::U(actual_value), self.sign);
+        fancy_number.show_name(false);
+        fancy_number
     }
 }
 
@@ -48,7 +50,7 @@ impl egui::Widget for FancySlider<'_> {
             let fancy_number = self.text();
             ui.add(
                 egui::Slider::new(&mut self.handler.value, 0..=120)
-                    .text(fancy_number.text())
+                    .text(&fancy_number)
                     .show_value(false),
             );
 

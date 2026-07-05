@@ -1,4 +1,5 @@
 pub mod tabs;
+pub mod utils;
 pub mod value_bar_converter;
 pub mod widgets;
 
@@ -10,7 +11,10 @@ use crate::{
     model::Economy,
     ui::{
         tabs::{Tab, budget_ui::BudgetUiHandler, demographics_ui::DemographicsUiHandler},
-        widgets::reduced_text::{SignEnum, reduce_text_u64},
+        widgets::{
+            fancy_text::{FancyNumber, Number, SignEnum, reduce_text_u64},
+            numeric_tooltip::NumericTooltip,
+        },
     },
 };
 
@@ -40,6 +44,49 @@ impl UiHandler {
 }
 
 impl UiHandler {
+    pub fn get_budget_tooltip(&self, ui: &mut Ui) {
+        let state = &self.economy.lock().unwrap().state;
+
+        let surplus_deficit = if state.deficit() >= 0 {
+            FancyNumber::new(
+                "Deficit".to_string(),
+                Number::U(state.deficit()),
+                SignEnum::Negative,
+            )
+        } else {
+            FancyNumber::new(
+                "Surplus".to_string(),
+                Number::U(state.surplus()),
+                SignEnum::Positive,
+            )
+        };
+
+        let vec = vec![
+            FancyNumber::new(
+                "Taxes".to_string(),
+                Number::U(state.taxes),
+                SignEnum::Positive,
+            ),
+            FancyNumber::new(
+                "Printing".to_string(),
+                Number::U(state.printing),
+                SignEnum::Positive,
+            ),
+            FancyNumber::new(
+                "Spending".to_string(),
+                Number::U(state.spending),
+                SignEnum::Negative,
+            ),
+            FancyNumber::new(
+                "Interest".to_string(),
+                Number::U(state.interest_payments),
+                SignEnum::Negative,
+            ),
+        ];
+
+        ui.add(NumericTooltip::new(surplus_deficit, vec));
+    }
+
     pub fn update(&mut self, ui: &mut Ui) {
         egui::Panel::top("Top Panel").show(ui, |ui| {
             ui.horizontal(|ui| {
@@ -52,67 +99,11 @@ impl UiHandler {
                 });
                 ui.separator();
 
-                let state = &self.economy.lock().unwrap().state;
-                let response = if state.deficit() != 0 {
-                    egui::Label::new(reduce_text_u64(state.deficit(), SignEnum::Negative))
-                        .selectable(false)
-                        .ui(ui)
-                } else {
-                    egui::Label::new(reduce_text_u64(state.surplus(), SignEnum::Positive))
-                        .selectable(false)
-                        .ui(ui)
-                };
-
-                // Critical data.
-                let tooltip = egui::Tooltip::for_enabled(&response);
-                tooltip.show(|ui| {
-                    ui.horizontal(|ui| {
-                        ui.add(egui::Label::new(egui::RichText::new("Revenue: ")));
-                        ui.add(egui::Label::new(reduce_text_u64(
-                            state.revenue(),
-                            SignEnum::Positive,
-                        )));
-                    });
-                    ui.horizontal(|ui| {
-                        ui.add(egui::Label::new(egui::RichText::new("\tTaxes: ")));
-                        ui.add(egui::Label::new(reduce_text_u64(
-                            state.taxes,
-                            SignEnum::Positive,
-                        )));
-                    });
-                    ui.horizontal(|ui| {
-                        ui.add(egui::Label::new(egui::RichText::new("\tPrinting: ")));
-                        ui.add(egui::Label::new(reduce_text_u64(
-                            state.printing,
-                            SignEnum::Positive,
-                        )));
-                    });
-                    ui.horizontal(|ui| {
-                        ui.add(egui::Label::new(egui::RichText::new("Expenditure: ")));
-                        ui.add(egui::Label::new(reduce_text_u64(
-                            state.expenses(),
-                            SignEnum::Negative,
-                        )));
-                    });
-                    ui.horizontal(|ui| {
-                        ui.add(egui::Label::new(egui::RichText::new("\tSpending: ")));
-                        ui.add(egui::Label::new(reduce_text_u64(
-                            state.spending,
-                            SignEnum::Negative,
-                        )));
-                    });
-                    ui.horizontal(|ui| {
-                        ui.add(egui::Label::new(egui::RichText::new(
-                            "\tInterest Payments: ",
-                        )));
-                        ui.add(egui::Label::new(reduce_text_u64(
-                            state.interest_payments,
-                            SignEnum::Negative,
-                        )));
-                    });
-                });
-            })
+                // Budget topbar
+                self.get_budget_tooltip(ui);
+            });
         });
+
         egui::Panel::left("Left Panel").show(ui, |ui| match self.tab {
             TabEnum::Budget => {
                 self.budget_ui_handler.ui_left(ui, self.economy.clone());

@@ -4,8 +4,8 @@ use crate::{
         tabs::Tab,
         widgets::{
             fancy_slider::SliderHandler,
+            fancy_text::{FancyNumber, Number, SignEnum},
             pie_chart::PieChart,
-            reduced_text::{FancyNumber, Number, SignEnum},
             stacked_bar_chart::StackedBarChart,
         },
     },
@@ -79,30 +79,54 @@ impl Tab for BudgetUiHandler {
         }
         state.adjust_borrowing();
         ui.horizontal(|ui| {
-            ui.label("Inflation: ");
-            FancyNumber::new(Number::F(state.inflation), SignEnum::Neutral).ui(ui)
+            FancyNumber::new(
+                "Inflation: ".to_string(),
+                Number::F(state.inflation),
+                SignEnum::Neutral,
+            )
+            .ui(ui)
         });
         ui.horizontal(|ui| {
-            ui.label("Interest: ");
-            FancyNumber::new(Number::F(state.interest), SignEnum::Neutral).ui(ui)
+            FancyNumber::new(
+                "Interest: ".to_string(),
+                Number::F(state.interest),
+                SignEnum::Neutral,
+            )
+            .ui(ui)
         });
         ui.horizontal(|ui| {
-            ui.label("Money Supply: ");
-            FancyNumber::new(Number::U(state.money_supply), SignEnum::Neutral).ui(ui)
+            FancyNumber::new(
+                "Money Supply: ".to_string(),
+                Number::U(state.money_supply),
+                SignEnum::Neutral,
+            )
+            .ui(ui)
         });
         ui.separator();
         ui.horizontal(|ui| {
-            ui.label("Surplus: ");
-            FancyNumber::new(Number::U(state.surplus()), SignEnum::Positive).ui(ui)
+            FancyNumber::new(
+                "Surplus: ".to_string(),
+                Number::U(state.surplus()),
+                SignEnum::Positive,
+            )
+            .ui(ui)
         });
         ui.separator();
         ui.horizontal(|ui| {
-            ui.label("Interest: ");
-            FancyNumber::new(Number::U(state.deficit()), SignEnum::Negative).ui(ui)
+            FancyNumber::new(
+                "Interest: ".to_string(),
+                Number::U(state.interest_payments),
+                SignEnum::Negative,
+            )
+            .ui(ui)
         });
         ui.horizontal(|ui| {
-            ui.label("Debt: ");
-            FancyNumber::new(Number::U(state.debt), SignEnum::Negative).ui(ui)
+            FancyNumber::new(
+                "Debt: ".to_string(),
+                Number::U(state.debt),
+                SignEnum::Negative,
+            )
+            .ui(ui)
         });
     }
 

@@ -1,4 +1,6 @@
-use eframe::egui;
+use std::iter::Sum;
+
+use eframe::egui::{self, WidgetText};
 use egui::{Color32, RichText, Widget};
 
 pub fn reduce_text_u64(value: u64, sign: SignEnum) -> RichText {
@@ -41,38 +43,84 @@ pub fn reduce_text_f64(value: f64, sign: SignEnum) -> RichText {
     })
 }
 
+pub fn reduce_text(number: &FancyNumber) -> RichText {
+    match number.value {
+        Number::U(v) => reduce_text_u64(v, number.sign),
+        Number::F(v) => reduce_text_f64(v, number.sign),
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Number {
     U(u64),
     F(f64),
 }
 
-#[derive(Debug, Clone, Copy)]
+impl Sum for Number {
+    fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
+        todo!()
+    }
+}
+
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum SignEnum {
     Positive,
     Negative,
     Neutral,
 }
 
+#[derive(Debug, Clone, PartialEq)]
 pub struct FancyNumber {
-    value: Number,
-    sign: SignEnum,
+    pub name: String,
+    pub value: Number,
+    pub sign: SignEnum,
+    pub show_name: bool,
 }
 
 impl FancyNumber {
-    pub fn new(value: Number, sign: SignEnum) -> Self {
-        Self { value, sign }
+    pub fn new(name: String, value: Number, sign: SignEnum) -> Self {
+        Self {
+            name,
+            value,
+            sign,
+            show_name: true,
+        }
     }
 
-    pub fn text(&self) -> RichText {
+    pub fn numeric_text(&self) -> RichText {
         match self.value {
             Number::U(u) => reduce_text_u64(u, self.sign),
             Number::F(f) => reduce_text_f64(f, self.sign),
         }
     }
+
+    pub fn show_name(&mut self, show_name: bool) {
+        self.show_name = show_name;
+    }
 }
 
-impl Widget for FancyNumber {
+impl Sum for &FancyNumber {
+    fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
+        let value = iter.map(|fancy_number| fancy_number.value).sum();
+        let name = "".to_string();
+        &FancyNumber::new(name, value, SignEnum::Neutral)
+    }
+}
+
+impl Into<WidgetText> for &FancyNumber {
+    fn into(self) -> WidgetText {
+        self.numeric_text().into()
+    }
+}
+
+impl Widget for &FancyNumber {
     fn ui(self, ui: &mut egui::Ui) -> egui::Response {
-        ui.add(egui::Label::new(self.text()).selectable(false))
+        ui.horizontal(|ui| {
+            if self.show_name {
+                ui.add(egui::Label::new(&self.name).selectable(false));
+            }
+            ui.add(egui::Label::new(self.numeric_text()).selectable(false))
+        })
+        .response
     }
 }
