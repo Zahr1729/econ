@@ -46,5 +46,8 @@ impl State {
         self.debt -= self.surplus().min(self.debt);
         self.debt = ((1.0 + self.interest) * self.debt as f64) as u64;
         self.debt += self.borrowing;
+
+        self.adjust_interest_payments();
+        self.adjust_borrowing();
     }
 }

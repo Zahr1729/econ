@@ -10,7 +10,7 @@ pub mod model;
 pub mod ui;
 
 struct MyApp {
-    economy: Arc<Mutex<Economy>>,
+    _economy: Arc<Mutex<Economy>>,
     ui_handler: UiHandler,
 }
 
@@ -33,7 +33,7 @@ impl Default for MyApp {
         economy.state.adjust_interest_payments();
         let econ_wrapper = Arc::new(Mutex::new(economy));
         Self {
-            economy: econ_wrapper.clone(),
+            _economy: econ_wrapper.clone(),
             ui_handler: UiHandler::new(econ_wrapper),
         }
     }

@@ -3,6 +3,7 @@ use crate::{
     ui::{
         tabs::Tab,
         widgets::{
+            fancy_slider::SliderHandler,
             pie_chart::PieChart,
             reduced_text::{FancyNumber, Number, SignEnum},
             stacked_bar_chart::StackedBarChart,
@@ -17,19 +18,31 @@ use egui::{Widget, vec2};
 use crate::ui::{value_bar_converter::ValueBarConverter, widgets::fancy_slider::FancySlider};
 
 pub struct BudgetUiHandler {
-    spending_bar: u32,
-    taxes_bar: u32,
-    printing_bar: u32,
+    pub taxes_bar_handler: SliderHandler,
+    pub spending_bar_handler: SliderHandler,
+    pub printing_bar_handler: SliderHandler,
     radius: f32,
     vertical: bool,
 }
 
 impl Default for BudgetUiHandler {
     fn default() -> Self {
+        let converter_taxes = ValueBarConverter::new(0, 132_040_560_000, 0, 120);
+        let converter_spending = ValueBarConverter::new(0, 181_216_060_000, 0, 120);
+        let converter_printing = ValueBarConverter::new(0, 51_024_030_000, 0, 120);
+
         Self {
-            spending_bar: 100,
-            taxes_bar: 100,
-            printing_bar: 100,
+            taxes_bar_handler: SliderHandler::new(100, "Taxes".to_string(), converter_taxes),
+            spending_bar_handler: SliderHandler::new(
+                100,
+                "Spending".to_string(),
+                converter_spending,
+            ),
+            printing_bar_handler: SliderHandler::new(
+                100,
+                "Printing".to_string(),
+                converter_printing,
+            ),
             radius: 150.0,
             vertical: true,
         }
@@ -42,33 +55,24 @@ impl Tab for BudgetUiHandler {
         ui.heading("Budget");
         ui.separator();
 
-        let converter_taxes = ValueBarConverter::new(0, 132_040_560_000, 0, 120);
-        let converter_spending = ValueBarConverter::new(0, 181_216_060_000, 0, 120);
-        let converter_printing = ValueBarConverter::new(0, 51_024_030_000, 0, 120);
+        ui.add(FancySlider::new(
+            &mut self.taxes_bar_handler,
+            SignEnum::Positive,
+        ));
+        ui.add(FancySlider::new(
+            &mut self.printing_bar_handler,
+            SignEnum::Positive,
+        ));
 
         ui.add(FancySlider::new(
-            &mut self.taxes_bar,
-            SignEnum::Positive,
-            "Taxes",
-            &converter_taxes,
-        ));
-        ui.add(FancySlider::new(
-            &mut self.spending_bar,
+            &mut self.spending_bar_handler,
             SignEnum::Negative,
-            "Spending",
-            &converter_spending,
-        ));
-        ui.add(FancySlider::new(
-            &mut self.printing_bar,
-            SignEnum::Positive,
-            "Printing",
-            &converter_printing,
         ));
 
         let button = ui.button("Progress Year");
-        state.taxes = converter_taxes.to_value(self.taxes_bar);
-        state.spending = converter_spending.to_value(self.spending_bar);
-        state.printing = converter_printing.to_value(self.printing_bar);
+        state.taxes = self.taxes_bar_handler.to_value();
+        state.spending = self.spending_bar_handler.to_value();
+        state.printing = self.printing_bar_handler.to_value();
 
         if button.clicked() {
             state.progress_year();
