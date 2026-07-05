@@ -29,7 +29,7 @@ impl Default for BudgetUiHandler {
     fn default() -> Self {
         let converter_taxes = ValueBarConverter::new(0, 132_040_560_000, 0, 120);
         let converter_spending = ValueBarConverter::new(0, 181_216_060_000, 0, 120);
-        let converter_printing = ValueBarConverter::new(0, 51_024_030_000, 0, 120);
+        let converter_printing = ValueBarConverter::new(0, 581_024_030_000, 0, 120);
 
         Self {
             taxes_bar_handler: SliderHandler::new(100, "Taxes".to_string(), converter_taxes),
@@ -39,7 +39,7 @@ impl Default for BudgetUiHandler {
                 converter_spending,
             ),
             printing_bar_handler: SliderHandler::new(
-                100,
+                20,
                 "Printing".to_string(),
                 converter_printing,
             ),

@@ -102,7 +102,9 @@ impl UiHandler {
                         )));
                     });
                     ui.horizontal(|ui| {
-                        ui.add(egui::Label::new(egui::RichText::new("\tInterest: ")));
+                        ui.add(egui::Label::new(egui::RichText::new(
+                            "\tInterest Payments: ",
+                        )));
                         ui.add(egui::Label::new(reduce_text_u64(
                             state.interest_payments,
                             SignEnum::Negative,

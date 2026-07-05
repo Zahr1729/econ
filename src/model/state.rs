@@ -38,7 +38,7 @@ impl State {
     }
 
     pub fn adjust_interest_payments(&mut self) {
-        self.interest_payments = (self.debt as f64 * self.inflation) as u64;
+        self.interest_payments = (self.debt as f64 * self.interest) as u64;
     }
 
     pub fn progress_year(&mut self) {
